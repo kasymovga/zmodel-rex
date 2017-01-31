@@ -220,7 +220,7 @@ int parsefilenames(void)
 
 char *tokenpos;
 
-int getline(char *line)
+int zmodel_getline(char *line)
 {
 	char *out = line;
 	while (*tokenpos == '\r' || *tokenpos == '\n')
@@ -271,7 +271,7 @@ typedef struct scene_s
 	float framerate;
 	int noloop;
 	int start, length;
-	float mins[3], maxs[3], radius; // clipping
+	float mins[3], maxs[3], radius, suborigin[3]; // clipping
 }
 scene_t;
 
@@ -421,7 +421,7 @@ int parsenodes(void)
 	char line[1024], name[1024];
 	memset(scenebone, 0, sizeof(scenebone));
 	memset(sceneboneremap, 0xFF, sizeof(sceneboneremap));
-	while (getline(line))
+	while (zmodel_getline(line))
 	{
 		if (!strcmp(line, "end"))
 			break;
@@ -505,7 +505,7 @@ int parseskeleton(void)
 	baseframe = numposes;
 	frame = baseframe;
 	highest = -1;
-	while (getline(line))
+	while (zmodel_getline(line))
 	{
 		sscanf(line, "%s %i", command, &i);
 		if (!strcmp(command, "end"))
@@ -569,7 +569,7 @@ int parsemeshskeleton(void)
 	char line[1024], command[256];
 	int i, num;
 	float x, y, z, a, b, c;
-	while (getline(line))
+	while (zmodel_getline(line))
 	{
 		sscanf(line, "%s %i", command, &i);
 		if (!strcmp(command, "end"))
@@ -625,7 +625,7 @@ int parsemeshtriangles(void)
 		else
 			matrixcopy(&meshpose[i], &bonematrix[i]);
 	}
-	while (getline(line))
+	while (zmodel_getline(line))
 	{
 		if (!strcmp(line, "end"))
 			break;
@@ -1215,7 +1215,7 @@ int parsemodelfile(void)
 	int i;
 	char line[1024], command[256];
 	tokenpos = modelfile;
-	while (getline(line))
+	while (zmodel_getline(line))
 	{
 		sscanf(line, "%s %i", command, &i);
 		if (!strcmp(command, "version"))
@@ -1239,7 +1239,7 @@ int parsemodelfile(void)
 		else if (!strcmp(command, "triangles"))
 		{
 			do
-				getline(line);
+				zmodel_getline(line);
 			while(strcmp(line, "end"));
 		}
 		else
@@ -1256,7 +1256,7 @@ int parsemeshmodelfile(void)
 	int i;
 	char line[1024], command[256];
 	tokenpos = modelfile;
-	while (getline(line))
+	while (zmodel_getline(line))
 	{
 		sscanf(line, "%s %i", command, &i);
 		if (!strcmp(command, "version"))
