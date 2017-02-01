@@ -845,6 +845,8 @@ void fixrootbones(void)
 {
 	int i, j;
 	bonepose_t rootpose, temp;
+	int scene_for_pose;
+	float fixedorigin[3];
 	AngleVectors(modelrotate, rootpose.m[0], rootpose.m[1], rootpose.m[2]);
 	// AngleVectors makes a right vector, we need a left vector
 	rootpose.m[1][0] *= -1;
@@ -859,8 +861,25 @@ void fixrootbones(void)
 		if (bone[j].parent < 0)
 		{
 			// a root bone
+			scene_for_pose = 0;
+			fixedorigin[0] = modelorigin[0];
+			fixedorigin[1] = modelorigin[1];
+			fixedorigin[2] = modelorigin[2];
 			for (i = 0;i < numposes;i++)
 			{
+				if (scene_for_pose < numscenes && scene[scene_for_pose].start == i) {
+					AngleVectors(modelrotate, rootpose.m[0], rootpose.m[1], rootpose.m[2]);
+					rootpose.m[1][0] *= -1;
+					rootpose.m[1][1] *= -1;
+					rootpose.m[1][2] *= -1;
+					fixedorigin[0] = modelorigin[0] + scene[scene_for_pose].suborigin[0];
+					fixedorigin[1] = modelorigin[1] + scene[scene_for_pose].suborigin[1];
+					fixedorigin[2] = modelorigin[2] + scene[scene_for_pose].suborigin[2];
+					scene_for_pose++;
+					rootpose.m[0][3] = (-fixedorigin[0] * modelscale[0] * rootpose.m[0][0] + -fixedorigin[1] * modelscale[1] * rootpose.m[1][0] + -fixedorigin[2] * modelscale[2] * rootpose.m[2][0]);
+					rootpose.m[1][3] = (-fixedorigin[0] * modelscale[0] * rootpose.m[0][1] + -fixedorigin[1] * modelscale[1] * rootpose.m[1][1] + -fixedorigin[2] * modelscale[2] * rootpose.m[2][1]);
+					rootpose.m[2][3] = (-fixedorigin[0] * modelscale[0] * rootpose.m[0][2] + -fixedorigin[1] * modelscale[1] * rootpose.m[1][2] + -fixedorigin[2] * modelscale[2] * rootpose.m[2][2]);
+				}
 				matrixcopy(&pose[i][j], &temp);
 				concattransform(&rootpose, &temp, &pose[i][j]);
 			}
@@ -1857,6 +1876,35 @@ int sc_fps(void)
 	return 1;
 }
 
+int sc_suborigin(void)
+{
+	char *c;
+	if (numscenes < 1)
+	{
+		printf("suborigin must follow a scene command\n");
+		return 0;
+	}
+	c = gettoken();
+	if (!c)
+		return 0;
+	if (!isfloat(c))
+		return 0;
+	scene[numscenes-1].suborigin[0] = atof(c);
+	c = gettoken();
+	if (!c)
+		return 0;
+	if (!isfloat(c))
+		return 0;
+	scene[numscenes-1].suborigin[1] = atof(c);
+	c = gettoken();
+	if (!c)
+		return 0;
+	if (!isfloat(c))
+		return 0;
+	scene[numscenes-1].suborigin[2] = atof(c);
+	return 1;
+}
+
 int sc_noloop(void)
 {
 	if (numscenes < 1)
@@ -1888,6 +1936,7 @@ sccommand sc_commands[] =
 	{"scale", sc_scale},
 	{"mesh", sc_mesh},
 	{"scene", sc_scene},
+	{"suborigin", sc_suborigin},
 	{"invert", sc_invert},
 	{"fps", sc_fps},
 	{"noloop", sc_noloop},
